@@ -4,9 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAllProducts, deleteProduct } from "../api/products";
 import { useMutation } from "@tanstack/react-query";
 import AddProductForm from "../components/columns/AddProductForm";
+
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
@@ -29,6 +29,9 @@ const ProductsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [productToEdit, setProductToEdit] = useState(null); // New state for product to edit
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const userRole = storedUser?.role;
 
   useEffect(() => {
     const handleDeleteProduct = (e) => {
@@ -62,6 +65,7 @@ const ProductsPage = () => {
       setCurrentPage(page);
     }
   };
+
   const queryClient = useQueryClient();
   const { mutate: deleteMutation } = useMutation({
     mutationFn: deleteProduct,
@@ -75,6 +79,14 @@ const ProductsPage = () => {
     },
   });
 
+  const handleEdit = (product) => {
+    console.log("Editing Product:", product);
+    console.log("Product ID:", product.id);
+    setProductToEdit(product);
+    setShowForm(true);
+    
+  };
+
   if (isLoading) return <div className="p-4">Loading products...</div>;
   if (isError)
     return <div className="p-4 text-red-600">Error loading products.</div>;
@@ -83,20 +95,32 @@ const ProductsPage = () => {
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">All Products</h1>
-        <button
-  onClick={() => setShowForm((prev) => !prev)}
-  className={`px-4 py-2 rounded text-white transition ${
-    showForm
-      ? "bg-red-600 hover:bg-red-700"    
-      : "bg-green-600 hover:bg-green-700" // Default is green
-  }`}
->
-  {showForm ? "Close Form" : "Add New Product"}
-</button>
-
+        {userRole === "vendor" ? (
+          <button
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              setProductToEdit(null);
+            }}
+            className={`px-4 py-2 rounded text-white transition ${
+              showForm
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {showForm ? "Close Form" : "Add New Product"}
+          </button>
+        ) : null}
       </div>
 
-      {showForm && <AddProductForm />}
+      {userRole === "vendor" && showForm && (
+        <AddProductForm
+          initialData={productToEdit}
+          onSuccess={() => {
+            setProductToEdit(null);
+            setShowForm(false);
+          }}
+        />
+      )}
 
       {successMessage && (
         <div className="mb-4 p-3 rounded text-sm bg-green-100 text-green-800 border border-green-300">
@@ -110,11 +134,30 @@ const ProductsPage = () => {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {paginatedProducts.map((product) => (
-              <Product key={product._id} product={product} />
+              <Product key={product.id} product={product}>
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => {
+                    const event = new CustomEvent("delete-product", {
+                      detail: product.id,
+                    });
+
+                    window.dispatchEvent(event);
+                  }}
+                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Delete
+                </button>
+              </Product>
             ))}
           </div>
 
-          {/* Pagination Controls */}
           <div className="flex justify-center mt-6 gap-2">
             <button
               onClick={() => goToPage(currentPage - 1)}
@@ -148,6 +191,7 @@ const ProductsPage = () => {
           </div>
         </>
       )}
+
       <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
