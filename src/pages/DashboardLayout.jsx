@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import AdminSidebar from '../components/columns/Sidebar';
-import VendorSidebar from '../components/columns/VendorSidebar';
+
 import AdminDashboard from '../pages/Dashboard';
 import VendorDashboard from '../pages/VendorDashboard';
 import axios from 'axios';
