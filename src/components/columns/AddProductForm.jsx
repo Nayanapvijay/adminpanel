@@ -10,7 +10,7 @@ const AddProductForm = ({ initialData = null, onSuccess }) => {
     price: "",
     stock: "",
     offerPrice: "",
-    availability: "", // default option
+    availability: "", 
     category: "",
     image: null,
   });
@@ -131,6 +131,7 @@ const AddProductForm = ({ initialData = null, onSuccess }) => {
       <input
         type="number"
         name="availability"
+        placeholder="Availability"
         value={formData.availability || ""}
         onChange={handleChange}
         className="w-full p-2 border rounded"

@@ -10,8 +10,25 @@ export const getAllProducts = async () => {
 };
 
 export const deleteProduct = async (id) => {
-  const res = await axios.delete(`https://fishandmeatapp.onrender.com/api/products/${id}`);
-  return res.data;
+  
+  const token = localStorage.getItem("token");  
+
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,  
+    },
+  };
+
+  try {
+    const res = await axios.delete(
+      `https://fishandmeatapp.onrender.com/api/products/${id}`,
+      config
+    );
+    return res.data;
+  } catch (error) {
+    console.error('Error deleting product:', error.response ? error.response.data : error.message);
+    throw error; 
+  }
 };
 
 export const addProduct = async (formData) => {
@@ -28,13 +45,14 @@ export const addProduct = async (formData) => {
 
 export const updateProduct = async ( {id, data} ) => {
   if (!id) throw new Error("Product ID is required to update the product.");
-
+  const token = localStorage.getItem("token");
   const response = await axios.put(
     `https://fishandmeatapp.onrender.com/api/products/${id}`,
     data,
     {
       headers: {
         "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`,
       },
     }
   );

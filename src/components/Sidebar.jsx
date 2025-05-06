@@ -11,6 +11,7 @@ const Sidebar = () => {
        
         <Link to="/products" className="hover:text-blue-400 p-2">Products</Link>
         <Link to="/customers" className="hover:text-blue-400 p-2">Customers</Link>
+        <Link to="/sales-reports" className="hover:text-blue-400 p-2">Sales Report</Link>
       </nav>
     </aside>
   );

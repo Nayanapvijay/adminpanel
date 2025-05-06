@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const API_BASE_URL = "https://fishandmeatapp.onrender.com/api"; 
+const API_BASE_URL = "https://fishandmeatapp.onrender.com/api";
 
-const LoginPage = ({ setRole }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -13,7 +13,7 @@ const LoginPage = ({ setRole }) => {
 
   const navigate = useNavigate();
 
-  // Countdown timer for Resend OTP
+  // Countdown timer
   useEffect(() => {
     let timer;
     if (resendCountdown > 0) {
@@ -27,9 +27,11 @@ const LoginPage = ({ setRole }) => {
     try {
       await axios.post(`${API_BASE_URL}/auth/resend`, { email });
       setOtpSent(true);
-      setResendCountdown(30); // 30 seconds cooldown
+      setResendCountdown(30);
     } catch (err) {
-      alert("Failed to send OTP",err);
+      alert(
+        err.response?.data?.message || "Failed to send OTP. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,9 @@ const LoginPage = ({ setRole }) => {
       alert("OTP resent to your email");
       setResendCountdown(30);
     } catch (err) {
-      alert("Failed to resend OTP",err);
+      alert(
+        err.response?.data?.message || "Failed to resend OTP. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -55,16 +59,18 @@ const LoginPage = ({ setRole }) => {
         email,
         otp,
       });
-  
+
       const token = res.data.data.token;
       const username = res.data.data.username;
-  
+
       localStorage.setItem("token", token);
       localStorage.setItem("username", username);
-      setRole("admin"); // or get from backend if role is dynamic
+
       navigate("/dashboard");
     } catch (err) {
-      alert("OTP verification failed",err);
+      alert(
+        err.response?.data?.message || "OTP verification failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -84,7 +90,7 @@ const LoginPage = ({ setRole }) => {
           disabled={otpSent}
         />
 
-        {otpSent && (
+        {otpSent ? (
           <>
             <input
               type="text"
@@ -112,17 +118,27 @@ const LoginPage = ({ setRole }) => {
                 : "Resend OTP"}
             </button>
           </>
-        )}
-
-        {!otpSent && (
+        ) : (
           <button
             onClick={sendOtp}
             className="w-full bg-blue-500 text-white p-2 rounded"
-            disabled={loading}
+            disabled={loading || !email}
           >
             {loading ? "Sending..." : "Send OTP"}
           </button>
         )}
+
+        <div className="mt-4 text-center">
+          <p className="text-sm">
+            Don’t have an account?{" "}
+            <button
+              onClick={() => navigate("/register")}
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Create one
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

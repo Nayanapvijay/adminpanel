@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Product from "../components/columns/products";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllProducts, deleteProduct } from "../api/products";
+import { getAllProducts, deleteProduct , updateProduct } from "../api/products";
 import { useMutation } from "@tanstack/react-query";
 import AddProductForm from "../components/columns/AddProductForm";
 
@@ -29,9 +29,7 @@ const ProductsPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [productToEdit, setProductToEdit] = useState(null); // New state for product to edit
-  const storedUser = JSON.parse(localStorage.getItem("user"));
-  const userRole = storedUser?.role;
+  const [productToEdit, setProductToEdit] = useState(null);
 
   useEffect(() => {
     const handleDeleteProduct = (e) => {
@@ -67,6 +65,8 @@ const ProductsPage = () => {
   };
 
   const queryClient = useQueryClient();
+  
+  // Delete mutation
   const { mutate: deleteMutation } = useMutation({
     mutationFn: deleteProduct,
     onSuccess: () => {
@@ -79,49 +79,62 @@ const ProductsPage = () => {
     },
   });
 
+  // Update mutation for updating the product
+  const { mutate: updateMutation } = useMutation({
+    mutationFn: updateProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["products"]);
+      setSuccessMessage("Product updated successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+    },
+    onError: () => {
+      alert("Failed to update the product. Please try again.");
+    },
+  });
+
   const handleEdit = (product) => {
-    console.log("Editing Product:", product);
-    console.log("Product ID:", product.id);
     setProductToEdit(product);
     setShowForm(true);
-    
   };
 
   if (isLoading) return <div className="p-4">Loading products...</div>;
-  if (isError)
-    return <div className="p-4 text-red-600">Error loading products.</div>;
+  if (isError) return <div className="p-4 text-red-600">Error loading products.</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">All Products</h1>
-        {userRole === "vendor" ? (
-          <button
-            onClick={() => {
-              setShowForm((prev) => !prev);
-              setProductToEdit(null);
-            }}
-            className={`px-4 py-2 rounded text-white transition ${
-              showForm
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-green-600 hover:bg-green-700"
-            }`}
-          >
-            {showForm ? "Close Form" : "Add New Product"}
-          </button>
-        ) : null}
+
+        {/* Add New Product button */}
+        <button
+          onClick={() => {
+            setShowForm((prev) => !prev);
+            setProductToEdit(null);
+          }}
+          className="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700"
+        >
+          Add New Product
+        </button>
       </div>
 
-      {userRole === "vendor" && showForm && (
-        <AddProductForm
-          initialData={productToEdit}
-          onSuccess={() => {
-            setProductToEdit(null);
-            setShowForm(false);
-          }}
-        />
-      )}
+      {/* Show AddProductForm */}
+      
+          {showForm && (
+            <AddProductForm
+              initialData={productToEdit}
+              onSuccess={() => {
+                setProductToEdit(null);
+                setShowForm(false);
+                setSuccessMessage("Product updated successfully!");
+                setTimeout(() => setSuccessMessage(null), 3000);
+              }}
+              onSubmit={updateMutation.mutate}  // Pass the update mutation here
+            />
+          )}
+          
+       
 
+      {/* Display Success Message */}
       {successMessage && (
         <div className="mb-4 p-3 rounded text-sm bg-green-100 text-green-800 border border-green-300">
           {successMessage}
@@ -221,3 +234,4 @@ const ProductsPage = () => {
 };
 
 export default ProductsPage;
+
